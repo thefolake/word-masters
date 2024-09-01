@@ -1,0 +1,203 @@
+* {
+    box-sizing: border-box;
+}
+
+button {
+    cursor: pointer;
+}
+
+h1 {
+    text-align: center;
+}
+
+.loader-container {
+    align-items: center;
+    display: flex;
+    justify-content: center;
+    visibility: hidden;
+}
+
+.loader {
+    border: 16px solid #e3e3e3;
+    border-top: 16px solid #3498db;
+    border-radius: 50%;
+    animation: spin 2s linear infinite;
+}
+
+.alert-container {
+    align-items: center;
+    display: flex;
+    justify-content: center;
+    margin-bottom: 15px;
+    width: 100%;
+}
+
+.alert {
+    border-radius: 5px;
+    height: 40px;
+    max-width: 280px;
+    padding: 10px;
+    text-align: center;
+    width: 100%;
+}
+
+.error-alert {
+    background-color: #C53030;
+    color: white;
+}
+
+.hidden {
+    display: none;
+}
+
+
+.word-container {
+    column-gap: 5px;
+    cursor: pointer;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    height: 400px;
+    margin: 0 auto 10px;
+    max-width: 295px;
+    row-gap: 10px;
+    width: 100%;
+}
+
+.letter {
+    border: 3px solid #ccc;
+    color: black;
+    font-size: 35px;
+    font-weight: 600;
+    height: 45px;
+    text-align: center;
+    text-transform: uppercase;
+    width: 45px;
+}
+
+.correct {
+    background-color: green;
+    color: white;
+}
+
+.close {
+    background-color: goldenrod;
+    color: white;
+}
+
+.wrong {
+    background-color: #6a6969;
+    color: white;
+}
+
+.invalid {
+    animation: flash 1s;
+}
+
+.show {
+    visibility: visible;
+}
+
+.winner {
+    animation: winnerIndicator 4s infinite linear;
+}
+
+:modal {
+    background-color: #dad9da;
+    border: 2px solid #b6b2ad;
+    border-radius: 5px;
+}
+
+#close-modal {
+    position: absolute;
+    top: 27px;
+    right: 10px;
+    background: none;
+    border: none;
+    font-size: 18px;
+}
+
+#game-instructions {
+    display: block;
+    margin: auto;
+    width: 100px;
+    height: 32px;
+    position: absolute;
+    right: 30px;
+    top: 100px;
+}
+
+/*
+* animations
+*/
+
+@keyframes winnerIndicator {
+
+    100%,
+    0% {
+        color: rgb(255, 0, 0);
+    }
+
+    8% {
+        color: rgb(255, 127, 0);
+    }
+
+    16% {
+        color: rgb(255, 255, 0);
+    }
+
+    25% {
+        color: rgb(127, 255, 0);
+    }
+
+    33% {
+        color: rgb(0, 255, 0);
+    }
+
+    41% {
+        color: rgb(0, 255, 127);
+    }
+
+    50% {
+        color: rgb(0, 255, 255);
+    }
+
+    58% {
+        color: rgb(0, 127, 255);
+    }
+
+    66% {
+        color: rgb(0, 0, 255);
+    }
+
+    75% {
+        color: rgb(127, 0, 255);
+    }
+
+    83% {
+        color: rgb(255, 0, 255);
+    }
+
+    91% {
+        color: rgb(255, 0, 127);
+    }
+}
+
+@keyframes flash {
+    5% {
+        border-color: crimson;
+    }
+
+    100% {
+        border-color: #ccc;
+    }
+}
+
+@keyframes spin {
+0% {
+        transform: rotate(0deg);
+    }
+
+100% {
+    transform: rotate(360deg);
+}
+}
