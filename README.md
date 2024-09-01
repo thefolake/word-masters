@@ -1,1 +1,1 @@
-# word-masters
+# word-masters (HTML, CSS & JavaScript)
