@@ -90,7 +90,7 @@ h1 {
 }
 
 .invalid {
-    animation: flash 1s;
+    animation: flash 1s infinite;
 }
 
 .show {
