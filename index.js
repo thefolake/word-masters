@@ -150,16 +150,38 @@ async function init() {
     /** end wordle API integrations */
 
 
-    const validateLetterMatches = () => {
+    /** start side effects of round */
+    const continueToNextRound = () => {
+        currentGuess = '';
+    }
+
+    const endGameAsLoser = () => {
+        errorAlert(`You loose, the word was ${wordOfTheDay}`);
+        isGameOver = true;
+    }
+
+    const endGameAsWinner = () => {
+        document.querySelector('.wordle').classList.add('winner');
+        successAlert('You win');
+        gameInstructionBtn.remove();
+        isGameOver = true;
+        return;
+    }
+    
+    /**  end side effects of round */
+
+
+
+    const validateGuessAndShowResult = () => {
         //mark as correct, wrong or close
         const splitGuess = currentGuess.split('');
-        const map = countLetterOccurences(lettersOfWordOfTheDay);
+        const letterOccurenceMap = getLetterAndOccurrenceMapFromWord(wordOfTheDay);
         let isCorrectGuess = true;
 
         splitGuess.forEach((letter, index) => {
             if (letter === lettersOfWordOfTheDay[index]) {
                 showRightLetterInRightPosition(currentRow, index);
-                map[letter]--;
+                letterOccurenceMap[letter]--;
             } else {
                 isCorrectGuess = false;
             }
@@ -167,9 +189,9 @@ async function init() {
 
         splitGuess.forEach((letter, index) => {
             if (letter !== lettersOfWordOfTheDay[index]) {
-                if (map[letter] > 0) {
+                if (letterOccurenceMap[letter] > 0) {
                     showRightLetterInWrongPosition(currentRow, index);
-                    map[letter]--;
+                    letterOccurenceMap[letter]--;
                 } else {
                     showWrongLetter(currentRow, index);
                 }
@@ -191,17 +213,17 @@ async function init() {
         return currentGuess;
     };
 
-    const countLetterOccurences = (array) => {
-        const obj = {}
-        for(let i = 0; i < array.length; i++) {
-            const letter = array[i]
-            if (obj[letter]) {
-                obj[letter]++
+    const getLetterAndOccurrenceMapFromWord = (word) => {
+        const letterOccurenceMap = {}
+        for(let i = 0; i < word.length; i++) {
+            const letter = word[i]
+            if (letterOccurenceMap[letter]) {
+                letterOccurenceMap[letter]++
             } else {
-                obj[letter] = 1;
+                letterOccurenceMap[letter] = 1;
             }
         }
-        return obj
+        return letterOccurenceMap
     }
 
     wordOfTheDay = await getWordOfTheDay();
@@ -213,29 +235,54 @@ async function init() {
             return;
         }
 
-        const validateGuess = await validateWord();
-        if (!validateGuess) {
+        const isValidWord = await validateWord();
+        if (!isValidWord) {
             showInvalidWord();
             return
         }
 
-        const isCorrect = validateLetterMatches();
+        /** suggestion */
 
-        // move this function to showGameResult
-        if (isCorrect) {
-            document.querySelector('.wordle').classList.add('winner');
-            successAlert('You win');
-            gameInstructionBtn.remove();
-            isGameOver = true;
-            return;
-        } else if (currentRow === GAME_ROUNDS){
-            errorAlert(`You loose, the word was ${wordOfTheDay}`);
-            isGameOver = true
-        }
-        // end of showGameResult
+        /* 
+            // this function should not be in here
+            const markCurrentGuessAsCorrect = () => { 
+                splitGuess.forEach((letter, index) => {
+                    showRightLetterInRightPosition(currentRow, index);
+                });
+            }
 
 
-        currentGuess = ''
+            if(currentGuess.length !== ANSWER_LENGTH) {
+                return;
+            }
+
+            const isCurrentGuessCorrect = currentGuess === wordOfTheDay;
+
+            if (isCurrentGuessCorrect) {
+                markCurrentGuessAsCorrect(); // mark all the letters as being in the correct position
+                endGameAsWinner();
+            }
+
+            check if word is valid
+            markStatusOfLetterInCurrentGuess
+                (correct letter:correct - position, correct letter:wrong position, wrong letter)
+            const isNumberOfGuessesExhausted = currentRow === GAME_ROUNDS;
+
+            if (isNumberOfGuessesExhausted) endGameAsLoser();
+            else continueToNextRound(); 
+        
+        */
+
+        /** end suggestion */
+
+
+
+        const isGuessValid = validateGuessAndShowResult();
+        const isNumberOfGuessesExhausted = currentRow === GAME_ROUNDS;
+        
+        if (isGuessValid) endGameAsWinner();
+        else if (isNumberOfGuessesExhausted) endGameAsLoser();
+        else continueToNextRound();
 
     }
 
