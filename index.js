@@ -1,10 +1,10 @@
+
 async function init() {
 
     // Variables
     let currentGuess = '';
-    let currentRow = 0;
+    let currentRound = 0;
     let isGameOver = false;
-    let isLoading = true;
     let lettersOfWordOfTheDay;
 
     const ANSWER_LENGTH = 5;
@@ -13,61 +13,21 @@ async function init() {
     let wordOfTheDay = '';
 
     //UI Elements
-    const letters = document.querySelectorAll('.letter');
-    const loader = document.querySelector('.loader-container');
-    const alertElement = document.querySelector('.alert');
-    const modal = document.querySelector('#word-masters-dialog');
-    const gameInstructionBtn = document.querySelector('#game-instructions');
-    const closeModalBtn = document.querySelector('#close-modal');
-
-
-    /**  ====== start loader controls ========= */
-    const setLoading = (newLoadingState) => {
-        isLoading = newLoadingState;
-        loader.classList.toggle('show', isLoading);
-    }
-
-    const showLoader = () => {
-        setLoading(true);
-    }
-
-    const hideLoader = () => {
-        setLoading(false);
-    }
-    /**  ====== end loader controls ========= */
-
-
-    /**  ====== start alert controls ========= */
-
-    const displayAlert = (innerText, className) => {
-        alertElement.classList.remove('hidden');
-        alertElement.innerText = innerText;
-        alertElement.classList.add(className);
-    }
-
-    const successAlert = (message) => {
-        displayAlert(message, 'correct')
-    };
-
-    const errorAlert = (message) => {
-        displayAlert(message, 'error-alert')
-    };
-
-    /**  ====== end alert controls ========= */
-
-
+    const lettersElement = document.querySelectorAll('.letter');
+    const modalElement = document.querySelector('#word-masters-dialog');
+    const gameInstructionBtnElement = document.querySelector('#game-instructions');
+    const closeModalBtnElement = document.querySelector('#close-modal');
+    const headingElement = document.querySelector('.heading')
 
     /** ==== start letter box display state modifiers ===  */
-
     const getLetterElement = (letterElementRow, letterElementIndexOnRow) => {
-        return letters[letterElementRow * ANSWER_LENGTH + letterElementIndexOnRow];
+        return lettersElement[letterElementRow * ANSWER_LENGTH + letterElementIndexOnRow];
     }
 
     const showInvalidWord = () => {
         const invalidLetterClassName = "invalid";
         for (let i = 0; i< ANSWER_LENGTH; i++) {
-            const letterElementIndexOnRow = i;
-            const elLetterBox = getLetterElement(currentRow, letterElementIndexOnRow);
+            const elLetterBox = getLetterElement(currentRound, i);
             elLetterBox.classList.add(invalidLetterClassName);
 
             setTimeout(() => {
@@ -92,74 +52,28 @@ async function init() {
     }
     /** ==== end letter box display state modifiers ===  */
 
-
-
     /** ==== start guess content modifiers ===  */
-
     const deleteLastLetter = () => {
         currentGuess = currentGuess.substring(0, currentGuess.length - 1);
-        getLetterElement(currentRow, currentGuess.length).innerText = '';
+        getLetterElement(currentRound, currentGuess.length).innerText = '';
     }
 
     const addLetterToGuess = (letter) => {
         let updatedGuess = updateCurrentGuess(letter);
-        getLetterElement(currentRow, updatedGuess.length - 1).innerText = letter;
+        getLetterElement(currentRound, updatedGuess.length - 1).innerText = letter;
     };
-
     /** ==== end guess content modifiers ===  */
 
-
-    /** start wordle API integrations */
-
-    const WORDLE_BASE_URL = 'https://words.dev-apis.com';
-    const WORD_OF_THE_DAY_URL = WORDLE_BASE_URL + "/word-of-the-day";
-    const WORD_VALIDATION_URL = WORDLE_BASE_URL + "/validate-word";
-
-    const getWordOfTheDay = async () => {
-        showLoader();
-        try {
-            let wordOfTheDayResponse = await fetch(WORD_OF_THE_DAY_URL);
-            const responseObj = await wordOfTheDayResponse?.json()
-            wordOfTheDay = responseObj?.word?.toUpperCase();
-        } catch (error) {
-            console.log(error);
-            errorAlert(`${error.message || 'An error occured, please try again'}`);
-        } finally {
-            hideLoader();
-        }
-        return wordOfTheDay
-    };
-
-    const validateWord = async () => {
-        showLoader();
-        try {
-            const res = await fetch(WORD_VALIDATION_URL, {
-                method: "POST",
-                body: JSON.stringify({ word: currentGuess }),
-            });
-            const { validWord } = await res.json();
-            return validWord
-        } catch (error) {
-            console.log(error);
-            errorAlert(`${error || 'An error occured, please try again'}`);
-        } finally {
-            hideLoader();
-        }
-    }
-
-    /** end wordle API integrations */
-
-
-    const validateLetterMatches = () => {
+    const validateGuessAndShowResult = () => {
         //mark as correct, wrong or close
         const splitGuess = currentGuess.split('');
-        const map = countLetterOccurences(lettersOfWordOfTheDay);
+        const letterOccurenceMap = getLetterAndOccurrenceMapFromWord(wordOfTheDay);
         let isCorrectGuess = true;
 
         splitGuess.forEach((letter, index) => {
             if (letter === lettersOfWordOfTheDay[index]) {
-                showRightLetterInRightPosition(currentRow, index);
-                map[letter]--;
+                showRightLetterInRightPosition(currentRound, index);
+                letterOccurenceMap[letter]--;
             } else {
                 isCorrectGuess = false;
             }
@@ -167,16 +81,16 @@ async function init() {
 
         splitGuess.forEach((letter, index) => {
             if (letter !== lettersOfWordOfTheDay[index]) {
-                if (map[letter] > 0) {
-                    showRightLetterInWrongPosition(currentRow, index);
-                    map[letter]--;
+                if (letterOccurenceMap[letter] > 0) {
+                    showRightLetterInWrongPosition(currentRound, index);
+                    letterOccurenceMap[letter]--;
                 } else {
-                    showWrongLetter(currentRow, index);
+                    showWrongLetter(currentRound, index);
                 }
             }
         });
 
-        currentRow++;
+        currentRound++;
 
         return isCorrectGuess;
     }
@@ -191,20 +105,20 @@ async function init() {
         return currentGuess;
     };
 
-    const countLetterOccurences = (array) => {
-        const obj = {}
-        for(let i = 0; i < array.length; i++) {
-            const letter = array[i]
-            if (obj[letter]) {
-                obj[letter]++
+    const getLetterAndOccurrenceMapFromWord = (array) => {
+        const letterOccurenceMap = {}
+        for(const element of array) {
+            const letter = element
+            if (letterOccurenceMap[letter]) {
+                letterOccurenceMap[letter]++
             } else {
-                obj[letter] = 1;
+                letterOccurenceMap[letter] = 1;
             }
         }
-        return obj
+        return letterOccurenceMap
     }
 
-    wordOfTheDay = await getWordOfTheDay();
+    wordOfTheDay = await getWordOfTheDay(wordOfTheDay);
 
     if(wordOfTheDay) lettersOfWordOfTheDay = wordOfTheDay.split('');
 
@@ -213,34 +127,30 @@ async function init() {
             return;
         }
 
-        const validateGuess = await validateWord();
-        if (!validateGuess) {
+        const isValidWord = await validateWord(currentGuess);
+        if (!isValidWord) {
             showInvalidWord();
             return
         }
+        const isGuessValid = validateGuessAndShowResult();
 
-        const isCorrect = validateLetterMatches();
-
-        // move this function to showGameResult
-        if (isCorrect) {
-            document.querySelector('.wordle').classList.add('winner');
+        // TODO move this to a new function showCurrentRoundResult
+        if (isGuessValid) {
+            headingElement.classList.add('winner');
             successAlert('You win');
-            gameInstructionBtn.remove();
+            gameInstructionBtnElement.remove();
             isGameOver = true;
-            return;
-        } else if (currentRow === GAME_ROUNDS){
+        } else if (currentRound === GAME_ROUNDS){
             errorAlert(`You loose, the word was ${wordOfTheDay}`);
             isGameOver = true
+        } else {
+            currentGuess = ''
         }
         // end of showGameResult
-
-
-        currentGuess = ''
-
     }
 
     document.addEventListener('keydown', function (e) {
-        if(isGameOver || isLoading ) {
+        if(isGameOver || loadingState.isLoading ) {
             return
         }
 
@@ -255,15 +165,15 @@ async function init() {
         }
     });
 
-    gameInstructionBtn.addEventListener('click', () => {
-        modal.showModal();
+    gameInstructionBtnElement.addEventListener('click', () => {
+        modalElement.showModal();
     })
 
-    closeModalBtn.addEventListener('click', () => {
-        modal.close();
+    closeModalBtnElement.addEventListener('click', () => {
+        modalElement.close();
     })
 
-};
+}
 
 window.onload = (event) => {
     init();
