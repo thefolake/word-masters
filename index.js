@@ -150,7 +150,7 @@ async function init() {
     }
 
     document.addEventListener('keydown', function (e) {
-        if(isGameOver || loadingState.isLoading ) {
+        if(isGameOver || isLoading() ) {
             return
         }
 
